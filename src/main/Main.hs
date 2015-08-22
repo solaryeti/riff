@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE RecordWildCards #-}
 {-# OPTIONS_GHC -Wall -Werror #-}
 
 module Main where
@@ -12,28 +13,38 @@ import Riff.Sanitize
 
 data FileType = Dirs | Files
 type Directory = FilePath
+type Transformer = String -> String
 
 data Options = Options
-    { recurse :: Bool
+    { dryrun  :: Bool
     , lower   :: Bool
-    , dryrun  :: Bool
+    , multiunderscore :: Bool
     , paths   :: [FilePath]
+    , recurse :: Bool
+
     } deriving (Show, Data, Typeable)
 
 options :: Options
 options = Options
-    { recurse = True &= help "Recurse into subdirectories"
+    {
+      dryrun = True &= help "Display changes without actually renaming anything"
     , lower = def &= help "Convert to lowercase"
-    , dryrun = True &= help "Display changes without actually renaming anything"
+    , multiunderscore = def &= help "Allow multiple underscores"
     , paths = def &= args &= typ "FILES/DIRS"
+    , recurse = True &= help "Recurse into subdirectories"
     } &=
     verbosity &=
     help "Sanitize filenames by replacing any non-alphanumeric chars with _" &=
     summary "riff v0.0.0, (C) Steven Meunier 2015"
 
-transform :: String -> String
-transform = uncurry combine . mapSnd transformers . splitFileName
-  where transformers = map toLower . removeDupUnderscore . removeInvalid
+buildTransformer :: Options -> Transformer
+buildTransformer Options{..} = map
+                               (if lower then toLower else id) .
+                               (if multiunderscore then id else removeDupUnderscore) .
+                               removeInvalid
+
+transform :: Transformer -> String -> String
+transform f = uncurry combine . mapSnd f . splitFileName
 
 mapFst :: (a -> c) -> (a, b) -> (c, b)
 mapFst f (x, y) = (f x, y)
@@ -42,37 +53,32 @@ mapSnd :: (b -> c) -> (a, b) -> (a, c)
 mapSnd f (x, y) = (x, f y)
 
 main :: IO ()
-main = mapM_ run . paths =<< cmdArgs options
+main = cmdArgs options >>= \opts ->
+  mapM_ (run opts) (paths opts)
 -- main = print =<< cmdArgs options
 
-newNames :: FileType -> Directory -> IO [(FilePath, FilePath)]
-newNames t p = filter (uncurry (/=)) <$> map (\x -> (x, transform x)) <$> f p
-  where f = case t of
+newNames :: FileType -> Transformer -> Directory -> IO [(FilePath, FilePath)]
+newNames t f p = filter (uncurry (/=)) <$> map (\x -> (x, transform f x)) <$> g p
+  where g = case t of
           Dirs  -> dirs
           Files -> files
 
-rename :: FileType -> Directory -> IO ()
+rename :: FileType -> Transformer -> Directory -> IO ()
 -- rename t x = (map snd <$> newNames t x) >>= mapM_ putStrLn
-rename t x = do
-    filenamePairs <- newNames t x
+rename t f x = do
+    filenamePairs <- newNames t f x
     whenLoud (mapM_ (putStrLn . inform) filenamePairs)
   where inform (from, to) = from ++ " -> " ++ takeFileName to
 
-run :: Directory -> IO ()
-run p = do
+run :: Options -> Directory -> IO ()
+run opts p = do
     ds <- dirs p
     case ds of
-      [] -> rename Files p -- rename files if there are no more dirs to descend into
+      [] -> rename Files transformer p -- rename files if there are no more dirs to descend into
       xs -> do
-        mapM_ run xs
-        rename Files p
+        mapM_ (run opts) xs
+        rename Files transformer p
 
         -- Rename directories only after we have descended into them
-        rename Dirs p
-
--- Recurses to one level deep. What about arbitrary levels?
--- recurse :: Directory -> IO [[(FilePath, FilePath)]]
--- recurse p = do
---    ds <- newDirNames p
---    let d = map fst ds
---    mapM newFileNames d
+        rename Dirs transformer p
+  where transformer = buildTransformer opts
