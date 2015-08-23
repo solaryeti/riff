@@ -37,18 +37,23 @@ options = Options
     help "Sanitize filenames by replacing any non-alphanumeric chars with _" &=
     summary "riff v0.0.0, (C) Steven Meunier 2015"
 
+-- | Build a function that can be passed to 'transform' for transforming
+-- filenames
 buildTransformer :: Options -> Transformer
 buildTransformer Options{..} = map
-                               (if lower then toLower else id) .
-                               (if multiunderscore then id else removeDupUnderscore) .
-                               removeInvalid
+    (if lower then toLower else id) .
+    (if multiunderscore then id else removeDupUnderscore) .
+    removeInvalid
 
-transform :: Transformer -> String -> String
+-- | Transform a 'FilePath' using the given 'Transformer'
+transform :: Transformer -> FilePath -> FilePath
 transform f = uncurry combine . mapSnd f . splitFileName
 
+-- | Apply a function to the first element of a pair
 mapFst :: (a -> c) -> (a, b) -> (c, b)
 mapFst f (x, y) = (f x, y)
 
+-- | Apply a function to the second element of a pair
 mapSnd :: (b -> c) -> (a, b) -> (a, c)
 mapSnd f (x, y) = (x, f y)
 
@@ -82,3 +87,18 @@ run opts p = do
         -- Rename directories only after we have descended into them
         rename Dirs transformer p
   where transformer = buildTransformer opts
+
+
+
+-- Let's handle the IO exceptions in main
+-- import Control.Exception (try)
+-- import System.IO.Error
+--   do
+--   dirContents <- try (getDirectoryContents x)  :: IO (Either IOError [FilePath])
+--   case dirContents of
+--     Left _ -> Nothing
+--     Right fs -> Just $ absPaths (filterSpecial' fs)
+--       where absPaths = mapM (canonicalizePath . (x </>))
+
+-- filterSpecial' :: [FilePath] -> [FilePath]
+-- filterSpecial' = filter (\x -> x /= "." && x /= "..")
