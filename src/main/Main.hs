@@ -4,9 +4,13 @@
 
 module Main where
 
+import Control.Exception as E (try)
 import Data.Char (toLower)
+-- import GHC.IO.Exception
 import System.Console.CmdArgs
 import System.FilePath (combine, splitFileName, takeFileName)
+import System.IO.Error
+import System.Exit
 
 import Riff.Files
 import Riff.Sanitize
@@ -77,28 +81,27 @@ rename t f x = do
 
 run :: Options -> Directory -> IO ()
 run opts p = do
-    ds <- dirs p
+    ds <- E.try $ dirs p :: IO (Either IOError [FilePath])
     case ds of
-      [] -> rename Files transformer p -- rename files if there are no more dirs to descend into
-      xs -> do
-        mapM_ (run opts) xs
-        rename Files transformer p
+      Left e -> handleIOError e >> exitFailure
 
-        -- Rename directories only after we have descended into them
-        rename Dirs transformer p
+      -- rename files if there are no more dirs to descend into
+      Right [] -> rename Files transformer p
+
+      -- received a listing containing subdirectories
+      Right xs -> do
+          mapM_ (run opts) xs
+          rename Files transformer p
+
+          -- Rename directories only after we have descended into them
+          rename Dirs transformer p
+
   where transformer = buildTransformer opts
 
-
-
--- Let's handle the IO exceptions in main
--- import Control.Exception (try)
--- import System.IO.Error
---   do
---   dirContents <- try (getDirectoryContents x)  :: IO (Either IOError [FilePath])
---   case dirContents of
---     Left _ -> Nothing
---     Right fs -> Just $ absPaths (filterSpecial' fs)
---       where absPaths = mapM (canonicalizePath . (x </>))
-
--- filterSpecial' :: [FilePath] -> [FilePath]
--- filterSpecial' = filter (\x -> x /= "." && x /= "..")
+handleIOError :: IOError -> IO ()
+handleIOError e
+  | isDoesNotExistError e = case ioeGetFileName e of
+                              Nothing -> putStrLn "File does not exist"
+                              Just s  -> putStrLn $ s ++ ": file or directory does not exist"
+  | otherwise = putStrLn $ "You made a huge mistake but I don't know what it is!\n" ++
+                           "But I'll give you a hint: " ++ ioeGetErrorString e
