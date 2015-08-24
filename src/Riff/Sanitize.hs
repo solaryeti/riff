@@ -18,6 +18,7 @@ validChars = concat [ ['a'..'z']
 
 -- | Replace any characters in the string that are not part of 'validChars'
 -- with an underscore.
+-- TODO: no underscores at the end of a filename, e.g. somefile_.txt
 removeInvalid :: String -> String
 removeInvalid = foldr invalidToUnderscore ""
     where invalidToUnderscore x ys
