@@ -26,7 +26,7 @@ data Options = Options
     , multiunderscore :: Bool
     , paths   :: [FilePath]
     , recurse :: Bool
-
+    , validchars :: Bool
     } deriving (Show, Data, Typeable)
 
 options :: Options
@@ -37,9 +37,10 @@ options = Options
     , multiunderscore = def &= help "Allow multiple underscores"
     , paths = def &= args &= typ "FILES/DIRS"
     , recurse = True &= help "Recurse into subdirectories"
+    , validchars = def &= help "List the valid chars that filenames will consist of"
     } &=
     verbosity &=
-    help "Sanitize filenames by replacing any non-alphanumeric chars with _" &=
+    help "Sanitize filenames by replacing any chars not considered valid with _" &=
     summary "riff v0.0.0, (C) Steven Meunier 2015"
 
 -- | Build a function that can be passed to 'transform' for transforming
@@ -66,6 +67,7 @@ mapSnd f (x, y) = (x, f y)
 main :: IO ()
 main = do
   opts <- cmdArgs options
+  when (validchars opts) $ putStrLn validChars >> exitSuccess
   when (dryrun opts) $ putStrLn "Executing dryrun. No files will be renamed"
   mapM_ (run opts) (paths opts)
 
