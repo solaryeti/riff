@@ -3,6 +3,7 @@
 module Riff.Sanitize
        ( removeInvalid
        , removeDupUnderscore
+       , removeUnderscoreBeforeDot
        , validChars
        ) where
 
@@ -14,7 +15,7 @@ validChars :: String
 validChars = concat [ ['a'..'z']
                     , ['A'..'Z']
                     , map intToDigit [0..9]
-                    , "_." ]
+                    , "-_." ]
 
 -- | Replace any characters in the string that are not part of 'validChars'
 -- with an underscore.
@@ -30,6 +31,13 @@ removeDupUnderscore :: String -> String
 removeDupUnderscore = concatMap squash . group
   where squash ('_':_) = "_"
         squash xs = xs
+
+-- | Remove underscores before an extension so '_.' becomes '.'
+removeUnderscoreBeforeDot :: String -> String
+removeUnderscoreBeforeDot [] = []
+removeUnderscoreBeforeDot [x] = [x]
+removeUnderscoreBeforeDot ('_':'.':xs) = '.' : removeUnderscoreBeforeDot xs
+removeUnderscoreBeforeDot (x:xs) = x : removeUnderscoreBeforeDot xs
 
 -- removeDupExtension :: String -> String
 -- removeDupExtension s = f (groupBy (\_ x -> x /= '.') s)

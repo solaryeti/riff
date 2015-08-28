@@ -4,13 +4,14 @@
 
 module Main where
 
-import Control.Exception as E (try)
+import Control.Exception as E (catch, try)
+import Control.Monad (filterM, liftM, when)
 import Data.Char (toLower)
--- import GHC.IO.Exception
 import System.Console.CmdArgs
+import System.Directory (doesFileExist, doesDirectoryExist, renameDirectory, renameFile)
+import System.Exit
 import System.FilePath (combine, splitFileName, takeFileName)
 import System.IO.Error
-import System.Exit
 
 import Riff.Files
 import Riff.Sanitize
@@ -31,7 +32,7 @@ data Options = Options
 options :: Options
 options = Options
     {
-      dryrun = True &= help "Display changes without actually renaming anything"
+      dryrun = def &= help "Display changes without actually renaming anything"
     , lower = def &= help "Convert to lowercase"
     , multiunderscore = def &= help "Allow multiple underscores"
     , paths = def &= args &= typ "FILES/DIRS"
@@ -46,6 +47,7 @@ options = Options
 buildTransformer :: Options -> Transformer
 buildTransformer Options{..} = map
     (if lower then toLower else id) .
+    removeUnderscoreBeforeDot .
     (if multiunderscore then id else removeDupUnderscore) .
     removeInvalid
 
@@ -62,22 +64,10 @@ mapSnd :: (b -> c) -> (a, b) -> (a, c)
 mapSnd f (x, y) = (x, f y)
 
 main :: IO ()
-main = cmdArgs options >>= \opts ->
+main = do
+  opts <- cmdArgs options
+  when (dryrun opts) $ putStrLn "Executing dryrun. No files will be renamed"
   mapM_ (run opts) (paths opts)
--- main = print =<< cmdArgs options
-
-newNames :: FileType -> Transformer -> Directory -> IO [(FilePath, FilePath)]
-newNames t f p = filter (uncurry (/=)) <$> map (\x -> (x, transform f x)) <$> g p
-  where g = case t of
-          Dirs  -> dirs
-          Files -> files
-
-rename :: FileType -> Transformer -> Directory -> IO ()
--- rename t x = (map snd <$> newNames t x) >>= mapM_ putStrLn
-rename t f x = do
-    filenamePairs <- newNames t f x
-    whenLoud (mapM_ (putStrLn . inform) filenamePairs)
-  where inform (from, to) = from ++ " -> " ++ takeFileName to
 
 run :: Options -> Directory -> IO ()
 run opts p = do
@@ -86,22 +76,59 @@ run opts p = do
       Left e -> handleIOError e >> exitFailure
 
       -- rename files if there are no more dirs to descend into
-      Right [] -> rename Files transformer p
+      Right [] -> renamefunc Files transformer p
 
       -- received a listing containing subdirectories
       Right xs -> do
           mapM_ (run opts) xs
-          rename Files transformer p
+          renamefunc Files transformer p
 
           -- Rename directories only after we have descended into them
-          rename Dirs transformer p
+          renamefunc Dirs transformer p
 
   where transformer = buildTransformer opts
+        renamefunc = if dryrun opts then doDryrun else rename
 
-handleIOError :: IOError -> IO ()
-handleIOError e
-  | isDoesNotExistError e = case ioeGetFileName e of
-                              Nothing -> putStrLn "File does not exist"
-                              Just s  -> putStrLn $ s ++ ": file or directory does not exist"
-  | otherwise = putStrLn $ "You made a huge mistake but I don't know what it is!\n" ++
-                           "But I'll give you a hint: " ++ ioeGetErrorString e
+        handleIOError :: IOError -> IO ()
+        handleIOError e
+          | isDoesNotExistError e = case ioeGetFileName e of
+              Nothing -> putStrLn "File does not exist"
+              Just s  -> putStrLn $ s ++ ": file or directory does not exist"
+          | otherwise = putStrLn $ "You made a huge mistake but I don't know what it is!\n" ++
+                        "But I'll give you a hint: " ++ ioeGetErrorString e
+
+
+newNames :: FileType -> Transformer -> Directory -> IO [(FilePath, FilePath)]
+newNames t f p = filter (uncurry (/=)) <$> map (\x -> (x, transform f x)) <$> g p
+  where g = case t of
+          Dirs  -> dirs
+          Files -> files
+
+rename :: FileType -> Transformer -> Directory -> IO ()
+rename t f x = do
+    filenamePairs <- newNames t f x
+    pairs <- filterM (liftM not . newExists) filenamePairs
+
+    whenLoud (mapM_ (putStrLn . inform) pairs)
+
+    -- Inform about files that cannot be renamed because a file with
+    -- the new name already exists
+    whenLoud (filterM newExists filenamePairs >>= mapM_ (putStrLn . informExists))
+
+    mapM_ doRename pairs `E.catch` handler
+
+  where inform (from, to) = from ++ " -> " ++ takeFileName to
+        informExists (from, to) = "Skipping file: " ++ from ++ ": " ++
+                                  takeFileName to ++ " already exists."
+        newExists (_, to) = existsfunc t to
+        existsfunc Files = doesFileExist
+        existsfunc Dirs = doesDirectoryExist
+        doRename (from, to) = renamefunc t from to
+        renamefunc Files = renameFile
+        renamefunc Dirs = renameDirectory
+        handler :: IOError -> IO ()
+        handler e = putStrLn $ "Skipping file: " ++ show e
+
+doDryrun :: FileType -> Transformer -> Directory -> IO ()
+doDryrun t f x = newNames t f x >>= mapM_ (putStrLn . inform)
+  where inform (from, to) = from ++ " -> " ++ takeFileName to
