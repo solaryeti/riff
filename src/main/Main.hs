@@ -1,3 +1,18 @@
+{- |
+Module      :  <File name or $Header$ to be replaced automatically>
+Description :  Rename files in a directory to only include a subset of chars
+Copyright   :  (c) Steven Meunier
+License     :  <BSD-style>
+
+Maintainer  :  <steven@solaryeti.com>
+Stability   :  experimental
+Portability :  portable
+
+Rename files in a directory so that they only include a certain characters
+from a valid character set. Any invalid characters are replaced with an
+underscore.
+-}
+
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# OPTIONS_GHC -Wall -Werror #-}
@@ -5,13 +20,16 @@
 module Main where
 
 import Control.Exception as E (catch, try)
-import Control.Monad (filterM, liftM, when)
-import Data.Char (toLower)
-import System.Console.CmdArgs
-import System.Directory (doesFileExist, doesDirectoryExist, renameDirectory, renameFile)
+import Control.Monad          (filterM, liftM, when)
+import Data.Char              (toLower)
+import System.Directory       (doesDirectoryExist, doesFileExist,
+                               renameDirectory, renameFile)
 import System.Exit
-import System.FilePath (combine, splitFileName, takeFileName)
+import System.FilePath        (combine, splitFileName, takeFileName)
 import System.IO.Error
+
+import System.Console.CmdArgs (args, cmdArgs, def, help, typ, summary,
+                               verbosity, whenLoud, (&=), Data, Typeable)
 
 import Riff.Files
 import Riff.Sanitize
@@ -21,18 +39,17 @@ type Directory = FilePath
 type Transformer = String -> String
 
 data Options = Options
-    { dryrun  :: Bool
-    , lower   :: Bool
+    { dryrun          :: Bool
+    , lower           :: Bool
     , multiunderscore :: Bool
-    , paths   :: [FilePath]
-    , recurse :: Bool
-    , validchars :: Bool
+    , paths           :: [FilePath]
+    , recurse         :: Bool
+    , validchars      :: Bool
     } deriving (Show, Data, Typeable)
 
 options :: Options
 options = Options
-    {
-      dryrun = def &= help "Display changes without actually renaming anything"
+    { dryrun = def &= help "Display changes without actually renaming anything"
     , lower = def &= help "Convert to lowercase"
     , multiunderscore = def &= help "Allow multiple underscores"
     , paths = def &= args &= typ "FILES/DIRS"
@@ -66,11 +83,12 @@ mapSnd f (x, y) = (x, f y)
 
 main :: IO ()
 main = do
-  opts <- cmdArgs options
-  when (validchars opts) $ putStrLn validChars >> exitSuccess
-  when (dryrun opts) $ putStrLn "Executing dryrun. No files will be renamed"
-  mapM_ (run opts) (paths opts)
+    opts <- cmdArgs options
+    when (validchars opts) $ putStrLn validChars >> exitSuccess
+    when (dryrun opts) $ putStrLn "Executing dryrun. No files will be renamed"
+    mapM_ (run opts) (paths opts)
 
+-- | Main execution logic that is mapped to the paths provided by the user.
 run :: Options -> Directory -> IO ()
 run opts p = do
     ds <- E.try $ dirs p :: IO (Either IOError [FilePath])
@@ -88,23 +106,25 @@ run opts p = do
           -- Rename directories only after we have descended into them
           renamefunc Dirs transformer p
 
-  where transformer = buildTransformer opts
-        renamefunc = if dryrun opts then doDryrun else rename
+  where
+    transformer = buildTransformer opts
+    renamefunc = if dryrun opts then doDryrun else rename
 
-        handleIOError :: IOError -> IO ()
-        handleIOError e
-          | isDoesNotExistError e = case ioeGetFileName e of
-              Nothing -> putStrLn "File does not exist"
-              Just s  -> putStrLn $ s ++ ": file or directory does not exist"
-          | otherwise = putStrLn $ "You made a huge mistake but I don't know what it is!\n" ++
-                        "But I'll give you a hint: " ++ ioeGetErrorString e
+    handleIOError :: IOError -> IO ()
+    handleIOError e
+      | isDoesNotExistError e = case ioeGetFileName e of
+          Nothing -> putStrLn "File does not exist"
+          Just s  -> putStrLn $ s ++ ": file or directory does not exist"
+      | otherwise = putStrLn $ "You made a huge mistake but I don't know what it is!\n" ++
+                    "But I'll give you a hint: " ++ ioeGetErrorString e
 
 
 newNames :: FileType -> Transformer -> Directory -> IO [(FilePath, FilePath)]
-newNames t f p = filter (uncurry (/=)) <$> map (\x -> (x, transform f x)) <$> g p
-  where g = case t of
-          Dirs  -> dirs
-          Files -> files
+newNames t f dir = filter (uncurry (/=)) <$> map (\x -> (x, transform f x)) <$> g dir
+  where
+    g = case t of
+      Dirs  -> dirs
+      Files -> files
 
 rename :: FileType -> Transformer -> Directory -> IO ()
 rename t f x = do
@@ -119,17 +139,23 @@ rename t f x = do
 
     mapM_ doRename pairs `E.catch` handler
 
-  where inform (from, to) = from ++ " -> " ++ takeFileName to
-        informExists (from, to) = "Skipping file: " ++ from ++ ": " ++
-                                  takeFileName to ++ " already exists."
-        newExists (_, to) = existsfunc t to
-        existsfunc Files = doesFileExist
-        existsfunc Dirs = doesDirectoryExist
-        doRename (from, to) = renamefunc t from to
-        renamefunc Files = renameFile
-        renamefunc Dirs = renameDirectory
-        handler :: IOError -> IO ()
-        handler e = putStrLn $ "Skipping file: " ++ show e
+  where
+    inform (from, to) = from ++ " -> " ++ takeFileName to
+    informExists (from, to) = "Skipping file: " ++ from ++ ": " ++
+                              takeFileName to ++ " already exists."
+
+    newExists (_, to) = existsfunc t to
+
+    existsfunc Files = doesFileExist
+    existsfunc Dirs = doesDirectoryExist
+
+    doRename (from, to) = renamefunc t from to
+
+    renamefunc Files = renameFile
+    renamefunc Dirs = renameDirectory
+
+    handler :: IOError -> IO ()
+    handler e = putStrLn $ "Skipping file: " ++ show e
 
 doDryrun :: FileType -> Transformer -> Directory -> IO ()
 doDryrun t f x = newNames t f x >>= mapM_ (putStrLn . inform)
