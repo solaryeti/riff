@@ -24,6 +24,7 @@ import Control.Monad          (filterM, when, unless)
 import Data.Char              (toLower)
 import System.Exit
 import System.IO.Error
+import System.Posix.Files     (isRegularFile, getFileStatus)
 
 import System.Console.CmdArgs (args, cmdArgs, def, help, typ,
                                setVerbosity, summary, verbosity,
@@ -32,8 +33,6 @@ import System.Console.CmdArgs (args, cmdArgs, def, help, typ,
 
 import Riff.Files
 import Riff.Sanitize
-
-type Directory = FilePath
 
 data Options = Options
     { dryrun          :: Bool
@@ -49,7 +48,7 @@ options = Options
     { dryrun = def &= help "Display changes without actually renaming anything. Implies verbosity."
     , lower = def &= help "Convert to lowercase"
     , multiunderscore = def &= help "Allow multiple underscores"
-    , paths = def &= args &= typ "DIRS"
+    , paths = def &= args &= typ "FILES/DIRS"
     , recurse = def &= help "Recurse into subdirectories"
     , validchars = def &= help "List the valid chars that filenames will consist of"
     } &=
@@ -77,16 +76,23 @@ main = do
 -- If the user has opted to recurse, then any subdirectories are
 -- processed first before renaming files and directories in the given
 -- path.
-run :: Options -> Directory -> IO ()
-run opts dir = do
-    r <- E.try $ dirContents dir :: IO (Either IOError [FilePath])
-    case r of
+run :: Options -> FilePath -> IO ()
+run opts path = do
+    rf <- E.try (isRegularFile <$> getFileStatus path) :: IO (Either IOError Bool)
+    case rf of
         Left e -> handleIOError e >> exitFailure
-        Right xs -> do
-            when (recurse opts) $ dirs dir >>= mapM_ (run opts)
-            whenLoud . inform $ getFilePairs xs
-            unless (dryrun opts) $ E.catch (renameableFilePairs (getFilePairs xs) >>= mapM_ rename) handleIOError
+        Right True -> doRename [path]
+        Right False -> do
+          rd <- E.try $ dirContents path :: IO (Either IOError [FilePath])
+          case rd of
+              Left e -> handleIOError e >> exitFailure
+              Right xs -> do
+                  when (recurse opts) $ dirs path >>= mapM_ (run opts)
+                  doRename xs
   where
+    doRename ys = do
+        whenLoud . inform $ getFilePairs ys
+        unless (dryrun opts) $ E.catch (renameableFilePairs (getFilePairs ys) >>= mapM_ rename) handleIOError
     getFilePairs = filePairs $ buildTransformer opts
 
 inform :: FilePairs -> IO ()
