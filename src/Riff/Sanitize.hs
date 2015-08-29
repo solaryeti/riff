@@ -3,15 +3,30 @@
 module Riff.Sanitize
     (
       -- * Transformer Functions
-      removeInvalid
+      transform
+    , removeInvalid
     , removeDupUnderscore
     , removeUnderscoreBeforeDot
+
       -- * Valid Characters
     , validChars
+
+      -- * Types
+    , Transformer
     ) where
 
 import Data.Char (intToDigit)
 import Data.List (group)
+import System.FilePath (combine, splitFileName)
+
+-- | A function that performs a transformation on a string. The
+-- transformation is carried out by the 'transform' function.
+type Transformer = String -> String
+
+-- | Transform a 'FilePath' using the given 'Transformer'
+transform :: Transformer -> FilePath -> FilePath
+transform transformer = uncurry combine . mapSnd transformer . splitFileName
+  where mapSnd f (x, y) = (x, f y)
 
 -- | Replace any characters in the string that are not part of 'validChars'
 -- with an underscore.

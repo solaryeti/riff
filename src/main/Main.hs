@@ -23,7 +23,6 @@ import Control.Exception as E (catch, try)
 import Control.Monad          (filterM, liftM, when)
 import Data.Char              (toLower)
 import System.Exit
-import System.FilePath        (combine, splitFileName)
 import System.IO.Error
 
 import System.Console.CmdArgs (args, cmdArgs, def, help, typ, summary,
@@ -33,7 +32,6 @@ import Riff.Files
 import Riff.Sanitize
 
 type Directory = FilePath
-type Transformer = String -> String
 
 data Options = Options
     { dryrun          :: Bool
@@ -66,18 +64,6 @@ buildTransformer Options{..} = map
     (if multiunderscore then id else removeDupUnderscore) .
     removeInvalid
 
--- | Transform a 'FilePath' using the given 'Transformer'
-transform :: Transformer -> FilePath -> FilePath
-transform f = uncurry combine . mapSnd f . splitFileName
-
--- | Apply a function to the first element of a pair
-mapFst :: (a -> c) -> (a, b) -> (c, b)
-mapFst f (x, y) = (f x, y)
-
--- | Apply a function to the second element of a pair
-mapSnd :: (b -> c) -> (a, b) -> (a, c)
-mapSnd f (x, y) = (x, f y)
-
 main :: IO ()
 main = do
     opts <- cmdArgs options
@@ -93,15 +79,15 @@ run opts dir = do
       Left e -> handleIOError e >> exitFailure
 
       -- rename files if there are no more dirs to descend into
-      Right [] -> renamefunc files transformer dir
+      Right [] -> renamefunc transformer files dir
 
       -- received a listing containing subdirectories
       Right xs -> do
           mapM_ (run opts) xs
-          renamefunc files transformer dir
+          renamefunc transformer files dir
 
           -- Rename directories only after we have descended into them
-          renamefunc dirs transformer dir
+          renamefunc transformer dirs dir
 
   where
     transformer = buildTransformer opts
@@ -115,16 +101,9 @@ run opts dir = do
       | otherwise = putStrLn $ "You made a huge mistake but I don't know what it is!\n" ++
                     "But I'll give you a hint: " ++ ioeGetErrorString e
 
-
-newNames :: (FilePath -> IO [FilePath]) -> Transformer -> Directory -> IO FilePairs
-newNames f transformer dir = filter namesNotSame <$> map mkFilePair <$> f dir
-  where
-    namesNotSame (FilePair x y) = x /= y
-    mkFilePair x = FilePair x (transform transformer x)
-
-doRename :: (FilePath -> IO [FilePath]) -> Transformer -> Directory -> IO ()
-doRename list transformer dir = do
-    allFilePairs <- newNames list transformer dir
+doRename :: Transformer -> (FilePath -> IO [FilePath]) -> Directory -> IO ()
+doRename transformer lsfunc dir = do
+    allFilePairs <- getFilePairs transformer lsfunc dir
     renameableFilePairs <- filterM (liftM not . newExist) allFilePairs
 
     whenLoud (mapM_ print renameableFilePairs)
@@ -141,5 +120,8 @@ doRename list transformer dir = do
     handler :: IOError -> IO ()
     handler e = putStrLn $ "Skipping " ++ show e
 
-doDryrun :: (FilePath -> IO [FilePath]) -> Transformer -> Directory -> IO ()
-doDryrun t f x = newNames t f x >>= mapM_ print
+doDryrun :: Transformer -> (FilePath -> IO [FilePath]) -> Directory -> IO ()
+doDryrun transformer lsfunc dir = getFilePairs transformer lsfunc dir >>= mapM_ print
+
+getFilePairs :: Transformer -> (FilePath -> IO [FilePath]) -> Directory -> IO FilePairs
+getFilePairs transformer lsfunc dir = filePairs transformer <$> lsfunc dir

@@ -10,6 +10,7 @@ module Riff.Files
     , old
     , newExist
     , rename
+    , filePairs
 
       -- * Directory Listing
     , dirs
@@ -21,6 +22,8 @@ import System.Directory (getDirectoryContents, canonicalizePath)
 import System.FilePath ((</>), takeFileName)
 import System.Posix.Files (isRegularFile, isDirectory, getFileStatus, fileExist, FileStatus)
 import qualified System.Posix.Files as F (rename)
+
+import Riff.Sanitize
 
 type OldFilePath = FilePath
 type NewFilePath = FilePath
@@ -50,6 +53,16 @@ newExist (FilePair _ x) = fileExist x
 -- | Rename the old file in a 'FilePair' to the new name.
 rename :: FilePair -> IO ()
 rename (FilePair x y) = F.rename x y
+
+-- | Build a list of 'FilePair's by processing a list of 'FilePath's
+-- with a given 'Transformer'.  Any 'FilePath's that are the same
+-- after being transformed are filtered from the resulting
+-- 'FilePairs'.
+filePairs :: Transformer -> [FilePath] -> FilePairs
+filePairs f xs = filter namesNotSame $ map mkFilePair xs
+  where
+    namesNotSame (FilePair x y) = x /= y
+    mkFilePair x = FilePair x (transform f x)
 
 -- | List the directory names one level deep under a given parent directory.
 dirs :: FilePath -> IO [FilePath]
