@@ -72,23 +72,18 @@ main = do
     mapM_ (run opts) (paths opts)
 
 -- | Main execution logic that is mapped to the paths provided by the user.
+-- A listing of directories in the path are fetched. If there are any
+-- subdirectories then these are processed first before renaming files
+-- in the given path, followed by directories.
 run :: Options -> Directory -> IO ()
 run opts dir = do
-    ds <- E.try $ dirs dir :: IO (Either IOError [FilePath])
-    case ds of
-      Left e -> handleIOError e >> exitFailure
-
-      -- rename files if there are no more dirs to descend into
-      Right [] -> renamefunc transformer files dir
-
-      -- received a listing containing subdirectories
-      Right xs -> do
-          when (recurse opts) $ mapM_ (run opts) xs
-          renamefunc transformer files dir
-
-          -- Rename directories only after we have descended into them
-          renamefunc transformer dirs dir
-
+    when (recurse opts) $ do
+      ds <- E.try $ dirs dir :: IO (Either IOError [FilePath])
+      case ds of
+        Left e -> handleIOError e >> exitFailure
+        Right xs -> mapM_ (run opts) xs
+    dirContents dir >>= \ys ->
+      renamefunc (filePairs transformer ys) `E.catch` handleIOError
   where
     transformer = buildTransformer opts
     renamefunc = if dryrun opts then doDryrun else doRename
@@ -101,27 +96,19 @@ run opts dir = do
       | otherwise = putStrLn $ "You made a huge mistake but I don't know what it is!\n" ++
                     "But I'll give you a hint: " ++ ioeGetErrorString e
 
-doRename :: Transformer -> (FilePath -> IO [FilePath]) -> Directory -> IO ()
-doRename transformer lsfunc dir = do
-    allFilePairs <- getFilePairs transformer lsfunc dir
-    renameableFilePairs <- filterM (liftM not . newExist) allFilePairs
-
-    whenLoud (mapM_ print renameableFilePairs)
-
+doRename :: FilePairs -> IO ()
+doRename xs = do
     -- Inform about files that cannot be renamed because a file with
     -- the new name already exists
-    whenLoud (filterM newExist allFilePairs >>= mapM_ (putStrLn . informExists))
-
-    mapM_ rename renameableFilePairs `E.catch` handler
-
+    whenLoud (filterM newExist xs >>= mapM_ (putStrLn . informExists))
+    whenLoud (renameableFilePairs >>= mapM_ print )
+    (renameableFilePairs >>= mapM_ rename) `E.catch` handler
   where
+    renameableFilePairs = filterM (liftM not . newExist) xs
     informExists x = "Skipping " ++ show x ++ " already exists."
 
     handler :: IOError -> IO ()
     handler e = putStrLn $ "Skipping " ++ show e
 
-doDryrun :: Transformer -> (FilePath -> IO [FilePath]) -> Directory -> IO ()
-doDryrun transformer lsfunc dir = getFilePairs transformer lsfunc dir >>= mapM_ print
-
-getFilePairs :: Transformer -> (FilePath -> IO [FilePath]) -> Directory -> IO FilePairs
-getFilePairs transformer lsfunc dir = filePairs transformer <$> lsfunc dir
+doDryrun :: FilePairs -> IO ()
+doDryrun = mapM_ print

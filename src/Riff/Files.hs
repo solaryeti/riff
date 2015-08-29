@@ -13,6 +13,7 @@ module Riff.Files
     , filePairs
 
       -- * Directory Listing
+    , dirContents
     , dirs
     , files
     ) where
@@ -71,6 +72,11 @@ dirs = flip filteredLs isDirectory
 -- | List the regular files in a given a directory.
 files :: FilePath -> IO [FilePath]
 files = flip filteredLs isRegularFile
+
+-- | List all the files in a given directory with the regular files
+-- preceding directories.
+dirContents :: FilePath -> IO [FilePath]
+dirContents x = (++) <$> files x <*> dirs x
 
 -- | Filter out '.' and '..' from a directory listing.
 filterSpecial :: Monad m => [FilePath] -> m [FilePath]
