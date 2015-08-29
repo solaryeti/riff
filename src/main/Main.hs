@@ -48,7 +48,7 @@ options = Options
     , lower = def &= help "Convert to lowercase"
     , multiunderscore = def &= help "Allow multiple underscores"
     , paths = def &= args &= typ "DIRS"
-    , recurse = True &= help "Recurse into subdirectories"
+    , recurse = def &= help "Recurse into subdirectories"
     , validchars = def &= help "List the valid chars that filenames will consist of"
     } &=
     verbosity &=
@@ -83,7 +83,7 @@ run opts dir = do
 
       -- received a listing containing subdirectories
       Right xs -> do
-          mapM_ (run opts) xs
+          when (recurse opts) $ mapM_ (run opts) xs
           renamefunc transformer files dir
 
           -- Rename directories only after we have descended into them
