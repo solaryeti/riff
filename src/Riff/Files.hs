@@ -11,6 +11,7 @@ module Riff.Files
     , newExist
     , rename
     , filePairs
+    , renameableFilePairs
 
       -- * Directory Listing
     , dirContents
@@ -64,6 +65,12 @@ filePairs f xs = filter namesNotSame $ map mkFilePair xs
   where
     namesNotSame (FilePair x y) = x /= y
     mkFilePair x = FilePair x (transform f x)
+
+-- | Filter 'FilePairs' to remove the 'FilePair's that possess a new
+-- file name where that file already exists and renaming the file
+-- would clobber the existing file.
+renameableFilePairs :: FilePairs -> IO FilePairs
+renameableFilePairs = filterM (liftM not . newExist)
 
 -- | List the directory names one level deep under a given parent directory.
 dirs :: FilePath -> IO [FilePath]
