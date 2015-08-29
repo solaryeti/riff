@@ -86,7 +86,7 @@ dirContents :: FilePath -> IO [FilePath]
 dirContents x = (++) <$> files x <*> dirs x
 
 -- | Filter out '.' and '..' from a directory listing.
-filterSpecial :: Monad m => [FilePath] -> m [FilePath]
+filterSpecial :: [FilePath] -> IO [FilePath]
 filterSpecial = filterM (\x -> return $ x /= "." && x /= "..")
 
 -- | List a filtered directory listing for a given path.
