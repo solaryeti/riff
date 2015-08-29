@@ -74,9 +74,9 @@ main = do
     mapM_ (run opts) (paths opts)
 
 -- | Main execution logic that is mapped to the paths provided by the user.
--- A listing of directories in the path are fetched. If there are any
--- subdirectories then these are processed first before renaming files
--- in the given path, followed by directories.
+-- If the user has opted to recurse, then any subdirectories are
+-- processed first before renaming files and directories in the given
+-- path.
 run :: Options -> Directory -> IO ()
 run opts dir = do
     r <- E.try $ dirContents dir :: IO (Either IOError [FilePath])
