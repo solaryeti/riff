@@ -20,7 +20,7 @@ module Riff.Files
     ) where
 
 import Control.Monad (filterM, liftM)
-import System.Directory (getDirectoryContents, canonicalizePath)
+import System.Directory (getDirectoryContents, makeAbsolute)
 import System.FilePath ((</>), takeFileName)
 import System.Posix.Files (isRegularFile, isDirectory, getFileStatus, fileExist, FileStatus)
 import qualified System.Posix.Files as F (rename)
@@ -96,4 +96,4 @@ filteredLs x p = ls x >>= filterM (liftM p . getFileStatus)
 -- | List the absolute path for all files in a given directory.
 ls :: FilePath -> IO [FilePath]
 ls x = getDirectoryContents x >>= filterSpecial >>= absPaths
-  where absPaths = mapM (canonicalizePath . (x </>))
+  where absPaths = mapM (makeAbsolute . (x </>))
