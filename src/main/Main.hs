@@ -47,7 +47,7 @@ options = Options
     { dryrun = def &= help "Display changes without actually renaming anything"
     , lower = def &= help "Convert to lowercase"
     , multiunderscore = def &= help "Allow multiple underscores"
-    , paths = def &= args &= typ "FILES/DIRS"
+    , paths = def &= args &= typ "DIRS"
     , recurse = True &= help "Recurse into subdirectories"
     , validchars = def &= help "List the valid chars that filenames will consist of"
     } &=
