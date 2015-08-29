@@ -1,21 +1,17 @@
 -- | String sanitation
 
 module Riff.Sanitize
-       ( removeInvalid
-       , removeDupUnderscore
-       , removeUnderscoreBeforeDot
-       , validChars
-       ) where
+    (
+      -- * Transformer Functions
+      removeInvalid
+    , removeDupUnderscore
+    , removeUnderscoreBeforeDot
+      -- * Valid Characters
+    , validChars
+    ) where
 
 import Data.Char (intToDigit)
 import Data.List (group)
-
--- | A list of valid characters for file names.
-validChars :: String
-validChars = concat [ ['a'..'z']
-                    , ['A'..'Z']
-                    , map intToDigit [0..9]
-                    , "-_." ]
 
 -- | Replace any characters in the string that are not part of 'validChars'
 -- with an underscore.
@@ -38,15 +34,9 @@ removeUnderscoreBeforeDot [x] = [x]
 removeUnderscoreBeforeDot ('_':'.':xs) = '.' : removeUnderscoreBeforeDot xs
 removeUnderscoreBeforeDot (x:xs) = x : removeUnderscoreBeforeDot xs
 
--- removeDupExtension :: String -> String
--- removeDupExtension s = f (groupBy (\_ x -> x /= '.') s)
---   where f [[]] = ""
---         f [[x]] = [x]
---         f [(x:xs)] = case x of
---           'a' -> "aaaa"
---           _ -> "bbbb"
---         f [xs] = xs
-
--- foo = case "abc" of
---   'a':xs -> "aaaaa"
---   _ -> "bbbb"
+-- | A list of valid characters for file names.
+validChars :: String
+validChars = concat [ ['a'..'z']
+                    , ['A'..'Z']
+                    , map intToDigit [0..9]
+                    , "-_." ]

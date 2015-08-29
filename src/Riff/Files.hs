@@ -1,22 +1,22 @@
 -- | Working with file pairs and obtaining directory listings
 
 module Riff.Files
-       ( -- * Types
-         FilePair(..)
-       , FilePairs
+    ( -- * Types
+      FilePair(..)
+    , FilePairs
 
-         -- * FilePairs
-       , new
-       , old
-       , newExist
-       , rename
+      -- * FilePairs
+    , new
+    , old
+    , newExist
+    , rename
 
-         -- * Directory Listing
-       , dirs
-       , files
-       ) where
+      -- * Directory Listing
+    , dirs
+    , files
+    ) where
 
-import Control.Monad ((>=>), filterM)
+import Control.Monad (filterM, liftM)
 import System.Directory (getDirectoryContents, canonicalizePath)
 import System.FilePath ((</>), takeFileName)
 import System.Posix.Files (isRegularFile, isDirectory, getFileStatus, fileExist, FileStatus)
@@ -33,7 +33,7 @@ data FilePair = FilePair OldFilePath NewFilePath
 type FilePairs = [FilePair]
 
 instance Show FilePair where
-  show (FilePair x y) = x ++ " -> " ++ takeFileName y
+    show (FilePair x y) = x ++ " -> " ++ takeFileName y
 
 -- | Return the new name in a 'FilePair'.
 new :: FilePair -> FilePath
@@ -65,7 +65,7 @@ filterSpecial = filterM (\x -> return $ x /= "." && x /= "..")
 
 -- | List a filtered directory listing for a given path.
 filteredLs :: FilePath -> (FileStatus -> Bool) -> IO [FilePath]
-filteredLs x p = ls x >>= filterM (getFileStatus >=> return . p)
+filteredLs x p = ls x >>= filterM (liftM p . getFileStatus)
 
 -- | List the absolute path for all files in a given directory.
 ls :: FilePath -> IO [FilePath]
