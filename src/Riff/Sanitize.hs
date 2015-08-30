@@ -4,6 +4,7 @@ module Riff.Sanitize
     (
       -- * Transformer Functions
       transform
+    , dropApostrophe
     , removeInvalid
     , removeDupUnderscore
     , removeUnderscoreBeforeDot
@@ -48,6 +49,9 @@ removeUnderscoreBeforeDot [] = []
 removeUnderscoreBeforeDot [x] = [x]
 removeUnderscoreBeforeDot ('_':'.':xs) = '.' : removeUnderscoreBeforeDot xs
 removeUnderscoreBeforeDot (x:xs) = x : removeUnderscoreBeforeDot xs
+-- | Remove apostrophes from a 'String'.
+dropApostrophe :: String -> String
+dropApostrophe = filter ('\'' /=)
 
 -- | A list of valid characters for file names.
 validChars :: String

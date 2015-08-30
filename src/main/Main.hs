@@ -35,7 +35,8 @@ import Riff.Files
 import Riff.Sanitize
 
 data Options = Options
-    { dryrun          :: Bool
+    { apostrophe      :: Bool
+    , dryrun          :: Bool
     , lower           :: Bool
     , multiunderscore :: Bool
     , paths           :: [FilePath]
@@ -45,7 +46,8 @@ data Options = Options
 
 options :: Options
 options = Options
-    { dryrun = def &= help "Display changes without actually renaming anything. Implies verbosity."
+    { apostrophe = def &= help "Drop apostrophes instead of replacing them with an underscore."
+    , dryrun = def &= help "Display changes without actually renaming anything. Implies verbosity."
     , lower = def &= help "Convert to lowercase"
     , multiunderscore = def &= help "Allow multiple underscores"
     , paths = def &= args &= typ "FILES/DIRS"
@@ -63,7 +65,8 @@ buildTransformer Options{..} = map
     (if lower then toLower else id) .
     removeUnderscoreBeforeDot .
     (if multiunderscore then id else removeDupUnderscore) .
-    removeInvalid
+    removeInvalid .
+    (if apostrophe then dropApostrophe else id)
 
 main :: IO ()
 main = do
