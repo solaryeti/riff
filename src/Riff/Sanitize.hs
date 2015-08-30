@@ -16,9 +16,10 @@ module Riff.Sanitize
     , Transformer
     ) where
 
-import Data.Char (intToDigit)
-import Data.List (group)
-import System.FilePath (combine, splitFileName)
+import           Data.Char (intToDigit)
+import           Data.List (group)
+import qualified Data.Set as Set (fromList, member, Set)
+import           System.FilePath (combine, splitFileName)
 
 -- | A function that performs a transformation on a string. The
 -- transformation is carried out by the 'transform' function.
@@ -34,7 +35,7 @@ transform transformer = uncurry combine . mapSnd transformer . splitFileName
 removeInvalid :: String -> String
 removeInvalid = foldr invalidToUnderscore ""
     where invalidToUnderscore x ys
-            | x `elem` validChars = x : ys
+            | x `Set.member` validChars = x : ys
             | otherwise = '_' : ys
 
 -- | Remove duplicate underscores from a string.
@@ -54,8 +55,8 @@ dropApostrophe :: String -> String
 dropApostrophe = filter ('\'' /=)
 
 -- | A list of valid characters for file names.
-validChars :: String
-validChars = concat [ ['a'..'z']
-                    , ['A'..'Z']
-                    , map intToDigit [0..9]
-                    , "-_." ]
+validChars :: Set.Set Char
+validChars = Set.fromList $ concat [ ['a'..'z']
+                                   , ['A'..'Z']
+                                   , map intToDigit [0..9]
+                                   , "-_." ]

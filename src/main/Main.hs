@@ -19,20 +19,22 @@ underscore.
 
 module Main where
 
-import Control.Exception as E (catch, try)
-import Control.Monad          (filterM, when, unless)
-import Data.Char              (toLower)
-import System.Exit
-import System.IO.Error
-import System.Posix.Files     (isRegularFile, getFileStatus)
+import           Control.Exception as E (catch, try)
+import           Control.Monad (filterM, when, unless)
+import           Data.Char (toLower)
+import qualified Data.Set as Set (toList)
+
+import           System.Exit
+import           System.IO.Error
+import           System.Posix.Files (isRegularFile, getFileStatus)
 
 import System.Console.CmdArgs (args, cmdArgs, def, help, typ,
                                setVerbosity, summary, verbosity,
                                whenLoud, (&=),
                                Data, Typeable, Verbosity(..))
 
-import Riff.Files
-import Riff.Sanitize
+import           Riff.Files
+import           Riff.Sanitize
 
 data Options = Options
     { apostrophe      :: Bool
@@ -71,7 +73,7 @@ buildTransformer Options{..} = map
 main :: IO ()
 main = do
     opts <- cmdArgs options
-    when (validchars opts) $ putStrLn validChars >> exitSuccess
+    when (validchars opts) $ putStrLn (Set.toList validChars) >> exitSuccess
     when (dryrun opts) $ setVerbosity Loud >> putStrLn "Executing dryrun. No files will be renamed"
     mapM_ (run opts) (paths opts)
 
