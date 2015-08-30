@@ -58,7 +58,7 @@ options = Options
     } &=
     verbosity &=
     help "Sanitize filenames by replacing any chars not considered valid with _" &=
-    summary "riff v0.0.0, (C) Steven Meunier 2015"
+    summary "riff v0.1.0, (C) Steven Meunier 2015"
 
 -- | Build a function that can be passed to 'transform' for transforming
 -- filenames
