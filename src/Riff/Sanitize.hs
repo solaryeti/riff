@@ -45,10 +45,10 @@ removeDupUnderscore = concatMap squash . group
 
 -- | Remove underscores before an extension so '_.' becomes '.'
 removeUnderscoreBeforeDot :: String -> String
-removeUnderscoreBeforeDot [] = []
-removeUnderscoreBeforeDot [x] = [x]
-removeUnderscoreBeforeDot ('_':'.':xs) = '.' : removeUnderscoreBeforeDot xs
-removeUnderscoreBeforeDot (x:xs) = x : removeUnderscoreBeforeDot xs
+removeUnderscoreBeforeDot = foldr helper ""
+  where helper '_' ('.' : ys) = '.' : ys
+        helper x ys = x : ys
+
 -- | Remove apostrophes from a 'String'.
 dropApostrophe :: String -> String
 dropApostrophe = filter ('\'' /=)
