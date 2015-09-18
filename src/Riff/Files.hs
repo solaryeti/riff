@@ -19,13 +19,13 @@ module Riff.Files
     , files
     ) where
 
+import Riff.Sanitize
+
 import Control.Monad (filterM, liftM)
 import System.Directory (getDirectoryContents, makeAbsolute)
 import System.FilePath ((</>), takeFileName)
 import System.Posix.Files (isRegularFile, isDirectory, getFileStatus, fileExist, FileStatus)
 import qualified System.Posix.Files as F (rename)
-
-import Riff.Sanitize
 
 type OldFilePath = FilePath
 type NewFilePath = FilePath

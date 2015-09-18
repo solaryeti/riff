@@ -19,6 +19,9 @@ underscore.
 
 module Main where
 
+import           Riff.Files
+import           Riff.Sanitize
+
 import           Control.Exception as E (catch, try)
 import           Control.Monad (filterM, when, unless)
 import           Data.Char (toLower)
@@ -32,9 +35,6 @@ import System.Console.CmdArgs (args, cmdArgs, def, help, typ,
                                setVerbosity, summary, verbosity,
                                whenLoud, (&=),
                                Data, Typeable, Verbosity(..))
-
-import           Riff.Files
-import           Riff.Sanitize
 
 data Options = Options
     { apostrophe      :: Bool
@@ -64,11 +64,11 @@ options = Options
 -- filenames
 buildTransformer :: Options -> Transformer
 buildTransformer Options{..} = map
-    (if lower then toLower else id) .
-    removeUnderscoreBeforeDot .
-    (if multiunderscore then id else removeDupUnderscore) .
-    removeInvalid .
-    (if apostrophe then dropApostrophe else id)
+    (if lower then toLower else id)
+    . removeUnderscoreBeforeDot
+    . (if multiunderscore then id else removeDupUnderscore)
+    . removeInvalid
+    . (if apostrophe then dropApostrophe else id)
 
 main :: IO ()
 main = do
@@ -96,14 +96,14 @@ run opts path = do
                   doRename xs
   where
     doRename ys = do
-        whenLoud . inform $ getFilePairs ys
+        (whenLoud . inform . getFilePairs) ys
         unless (dryrun opts) $ E.catch (renameableFilePairs (getFilePairs ys) >>= mapM_ rename) handleIOError
     getFilePairs = filePairs $ buildTransformer opts
 
 inform :: FilePairs -> IO ()
 inform xs = do
-  filterM newExist xs >>= mapM_ (putStrLn . informExists)
-  renameableFilePairs xs >>= mapM_ print
+    filterM newExist xs >>= mapM_ (putStrLn . informExists)
+    renameableFilePairs xs >>= mapM_ print
   where
     informExists x = "Skipping " ++ show x ++ " already exists."
 

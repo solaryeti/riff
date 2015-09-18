@@ -34,9 +34,9 @@ transform transformer = uncurry combine . mapSnd transformer . splitFileName
 -- with an underscore.
 removeInvalid :: String -> String
 removeInvalid = foldr invalidToUnderscore ""
-    where invalidToUnderscore x ys
-            | x `Set.member` validChars = x : ys
-            | otherwise = '_' : ys
+  where invalidToUnderscore x ys
+          | x `Set.member` validChars = x : ys
+          | otherwise = '_' : ys
 
 -- | Remove duplicate underscores from a string.
 removeDupUnderscore :: String -> String
