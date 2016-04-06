@@ -14,7 +14,7 @@ underscore.
 -}
 
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE RecordWildCards    #-}
 {-# OPTIONS_GHC -Wall -Werror #-}
 
 module Main where
@@ -22,19 +22,19 @@ module Main where
 import           Riff.Files
 import           Riff.Sanitize
 
-import           Control.Exception as E (catch, try)
-import           Control.Monad (filterM, when, unless)
-import           Data.Char (toLower)
-import qualified Data.Set as Set (toList)
+import           Control.Exception      as E (catch, try)
+import           Control.Monad          (filterM, unless, when)
+import           Data.Char              (toLower)
+import qualified Data.Set               as Set (toList)
 
 import           System.Exit
 import           System.IO.Error
-import           System.Posix.Files (isRegularFile, getFileStatus)
+import           System.Posix.Files     (getFileStatus, isDirectory)
 
-import System.Console.CmdArgs (args, cmdArgs, def, help, typ,
-                               setVerbosity, summary, verbosity,
-                               whenLoud, (&=),
-                               Data, Typeable, Verbosity(..))
+import           System.Console.CmdArgs (Data, Typeable, Verbosity (..), args,
+                                         cmdArgs, def, help, setVerbosity,
+                                         summary, typ, verbosity, whenLoud,
+                                         (&=))
 
 data Options = Options
     { apostrophe      :: Bool
@@ -58,7 +58,7 @@ options = Options
     } &=
     verbosity &=
     help "Sanitize filenames by replacing any chars not considered valid with _" &=
-    summary "riff v0.1.0, (C) Steven Meunier 2015"
+    summary "riff v0.1.1, (C) Steven Meunier 2016"
 
 -- | Build a function that can be passed to 'transform' for transforming
 -- filenames
@@ -83,21 +83,22 @@ main = do
 -- path.
 run :: Options -> FilePath -> IO ()
 run opts path = do
-    rf <- E.try (isRegularFile <$> getFileStatus path) :: IO (Either IOError Bool)
+    rf <- E.try (isDirectory <$> getFileStatus path) :: IO (Either IOError Bool)
     case rf of
         Left e -> handleIOError e >> exitFailure
-        Right True -> doRename [path]
-        Right False -> do
-          rd <- E.try $ dirContents path :: IO (Either IOError [FilePath])
-          case rd of
+        Right True -> do
+          when (recurse opts) $ do
+            rd <- E.try $ dirContents path :: IO (Either IOError [FilePath])
+            case rd of
               Left e -> handleIOError e >> exitFailure
-              Right xs -> do
-                  when (recurse opts) $ dirs path >>= mapM_ (run opts)
-                  doRename xs
+              Right paths -> mapM_ (run opts) paths
+          doRename
+        Right False -> doRename
+
   where
-    doRename ys = do
-        (whenLoud . inform . getFilePairs) ys
-        unless (dryrun opts) $ E.catch (renameableFilePairs (getFilePairs ys) >>= mapM_ rename) handleIOError
+    doRename = do
+        (whenLoud . inform . getFilePairs) [path]
+        unless (dryrun opts) $ E.catch (renameableFilePairs (getFilePairs [path]) >>= mapM_ rename) handleIOError
     getFilePairs = filePairs $ buildTransformer opts
 
 inform :: FilePairs -> IO ()
@@ -113,5 +114,6 @@ handleIOError e
   | isDoesNotExistError e = case ioeGetFileName e of
       Nothing -> putStrLn "File does not exist"
       Just s  -> putStrLn $ "Aborting: " ++ s ++ ": file or directory does not exist"
-  | otherwise = putStrLn $ "You made a huge mistake but I don't know what it is!\n" ++
-                "But I'll give you a hint: " ++ ioeGetErrorString e
+  | otherwise = putStrLn $ "You made a huge mistake but I don't know what it is!\n"
+                        ++ "But I'll give you a hint: "
+                        ++ ioeGetErrorString e

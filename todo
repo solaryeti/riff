@@ -1,24 +1,8 @@
 Bugfixes:
---------------------------------------------------------------------------------
-steven@fox ~/s/tm353> riff -dlr *
-Executing dryrun. No files will be renamed
-TM353 Block 1 Part 4 Activity 4 8.pdf -> tm353_block_1_part_4_activity_4_8.pdf
-TM353 Block 1 Part 4 Activity 4.2.pdf -> tm353_block_1_part_4_activity_4.2.pdf
-TM353 Block 1 Part 4 Activity 4.3.pdf -> tm353_block_1_part_4_activity_4.3.pdf
-TM353 Block 1 Part 4 Activity 4.4.pdf -> tm353_block_1_part_4_activity_4.4.pdf
-TM353 Block 1 Part 4 Activity 4.5.pdf -> tm353_block_1_part_4_activity_4.5.pdf
-TM353 Block 1 Part 4 Activity 4.7.pdf -> tm353_block_1_part_4_activity_4.7.pdf
-Skipping tm353_bl01_pts01_to_03_e1i1_n9781780076683_lo.pdf -> tm353_bl01_pts01_to_03_e1i1_n9781780076683_lo.pdf already exists.
-Skipping tm353_block_1_part_4.epub -> tm353_block_1_part_4.epub already exists.
+None
 
-Looks like when specifying a filename that doesn't need changing, we don't actually check if it needs changing or not so probably the transformer is applied and then we see it already exists, which it does since the filename didn't change. This does not happen when recursing on the directory, eg. riff -ldr tm353.
---------------------------------------------------------------------------------
-steven@fox /m/d/music> riff -alv Orchester\ 1756
-steven@fox /m/d/music> ll
-total 80K
-drwxr-xr-x   2 steven users 4.0K Nov  4 10:37 Orchester 1756/
+New features:
 
-Running riff on a directory name doesn't do anything while it should transform the name
 --------------------------------------------------------------------------------
 steven@fox /m/d/music> riff -alrvd Orchester\ 1756/
 Executing dryrun. No files will be renamed
@@ -26,3 +10,6 @@ Executing dryrun. No files will be renamed
 ...
 
 "_-_" is ugly. Perhaps an option to make that nicer? "...primavera-allegro..." perhaps?
+
+--------------------------------------------------------------------------------
+Option to keep only the last . in a filename so foo.bar.baz becomes foo_bar.baz

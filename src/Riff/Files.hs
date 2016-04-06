@@ -19,12 +19,13 @@ module Riff.Files
     , files
     ) where
 
-import Riff.Sanitize
+import           Riff.Sanitize
 
-import Control.Monad (filterM, liftM)
-import System.Directory (getDirectoryContents, makeAbsolute)
-import System.FilePath ((</>), takeFileName)
-import System.Posix.Files (isRegularFile, isDirectory, getFileStatus, fileExist, FileStatus)
+import           Control.Monad      (filterM, liftM)
+import           System.Directory   (getDirectoryContents, makeAbsolute)
+import           System.FilePath    (takeFileName, (</>))
+import           System.Posix.Files (FileStatus, fileExist, getFileStatus,
+                                     isDirectory, isRegularFile)
 import qualified System.Posix.Files as F (rename)
 
 type OldFilePath = FilePath
@@ -61,16 +62,16 @@ rename (FilePair x y) = F.rename x y
 -- after being transformed are filtered from the resulting
 -- 'FilePairs'.
 filePairs :: Transformer -> [FilePath] -> FilePairs
-filePairs f xs = filter namesNotSame $ map mkFilePair xs
+filePairs f xs = filter (not . namesSame) $ map mkFilePair xs
   where
-    namesNotSame (FilePair x y) = x /= y
+    namesSame (FilePair x y) = x == y
     mkFilePair x = FilePair x (transform f x)
 
 -- | Filter 'FilePairs' to remove the 'FilePair's that possess a new
 -- file name where that file already exists and renaming the file
 -- would clobber the existing file.
 renameableFilePairs :: FilePairs -> IO FilePairs
-renameableFilePairs = filterM (liftM not . newExist)
+renameableFilePairs = filterM (fmap not . newExist)
 
 -- | List the directory names one level deep under a given parent directory.
 dirs :: FilePath -> IO [FilePath]
@@ -91,7 +92,7 @@ filterSpecial = filterM (\x -> return $ x /= "." && x /= "..")
 
 -- | List a filtered directory listing for a given path.
 filteredLs :: FilePath -> (FileStatus -> Bool) -> IO [FilePath]
-filteredLs x p = ls x >>= filterM (liftM p . getFileStatus)
+filteredLs x p = ls x >>= filterM (fmap p . getFileStatus)
 
 -- | List the absolute path for all files in a given directory.
 ls :: FilePath -> IO [FilePath]
