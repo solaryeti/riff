@@ -41,6 +41,7 @@ data Options = Options
     , dryrun          :: Bool
     , lower           :: Bool
     , multiunderscore :: Bool
+    , hyphen          :: Bool
     , paths           :: [FilePath]
     , recurse         :: Bool
     , validchars      :: Bool
@@ -52,13 +53,14 @@ options = Options
     , dryrun = def &= help "Display changes without actually renaming anything. Implies verbosity."
     , lower = def &= help "Convert to lowercase"
     , multiunderscore = def &= help "Allow multiple underscores"
+    , hyphen = def &= help "Neaten hyphens by removing underscores to the left and right of them"
     , paths = def &= args &= typ "FILES/DIRS"
     , recurse = def &= help "Recurse into subdirectories"
     , validchars = def &= help "List the valid chars that filenames will consist of"
     } &=
     verbosity &=
     help "Sanitize filenames by replacing any chars not considered valid with _" &=
-    summary "riff v0.1.1, (C) Steven Meunier 2016"
+    summary "riff v0.2.0, (C) Steven Meunier 2016"
 
 -- | Build a function that can be passed to 'transform' for transforming
 -- filenames
@@ -68,6 +70,7 @@ buildTransformer Options{..} = map
     . removeUnderscoreBeforeDot
     . (if multiunderscore then id else removeDupUnderscore)
     . removeInvalid
+    . (if hyphen then neatenHyphen else id)
     . (if apostrophe then dropApostrophe else id)
 
 main :: IO ()

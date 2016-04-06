@@ -5,6 +5,7 @@ module Riff.Sanitize
       -- * Transformer Functions
       transform
     , dropApostrophe
+    , neatenHyphen
     , removeInvalid
     , removeDupUnderscore
     , removeUnderscoreBeforeDot
@@ -16,9 +17,9 @@ module Riff.Sanitize
     , Transformer
     ) where
 
-import           Data.Char (intToDigit)
-import           Data.List (group)
-import qualified Data.Set as Set (fromList, member, Set)
+import           Data.Char       (intToDigit)
+import           Data.List       (group)
+import qualified Data.Set        as Set (Set, fromList, member)
 import           System.FilePath (combine, splitFileName)
 
 -- | A function that performs a transformation on a string. The
@@ -29,6 +30,17 @@ type Transformer = String -> String
 transform :: Transformer -> FilePath -> FilePath
 transform transformer = uncurry combine . mapSnd transformer . splitFileName
   where mapSnd f (x, y) = (x, f y)
+
+-- | Remove apostrophes from a 'String'.
+dropApostrophe :: String -> String
+dropApostrophe = filter ('\'' /=)
+
+-- | Remove underscores on the left or right side of a hyphen.
+neatenHyphen :: String -> String
+neatenHyphen = foldr helper ""
+  where helper '_' ('-' : ys) = '-' : ys
+        helper '-' ('_' : ys) = '-' : ys
+        helper x ys = x : ys
 
 -- | Replace any characters in the string that are not part of 'validChars'
 -- with an underscore.
@@ -49,10 +61,6 @@ removeUnderscoreBeforeDot :: String -> String
 removeUnderscoreBeforeDot = foldr helper ""
   where helper '_' ('.' : ys) = '.' : ys
         helper x ys = x : ys
-
--- | Remove apostrophes from a 'String'.
-dropApostrophe :: String -> String
-dropApostrophe = filter ('\'' /=)
 
 -- | A list of valid characters for file names.
 validChars :: Set.Set Char

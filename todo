@@ -2,14 +2,5 @@ Bugfixes:
 None
 
 New features:
-
---------------------------------------------------------------------------------
-steven@fox /m/d/music> riff -alrvd Orchester\ 1756/
-Executing dryrun. No files will be renamed
-/mnt/diskstation/music/Orchester 1756/01_La Primavera - Allegro.flac -> 01_la_primavera_-_allegro.flac
-...
-
-"_-_" is ugly. Perhaps an option to make that nicer? "...primavera-allegro..." perhaps?
-
 --------------------------------------------------------------------------------
 Option to keep only the last . in a filename so foo.bar.baz becomes foo_bar.baz
