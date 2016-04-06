@@ -77,7 +77,8 @@ main :: IO ()
 main = do
     opts <- cmdArgs options
     when (validchars opts) $ putStrLn (Set.toList validChars) >> exitSuccess
-    when (dryrun opts) $ setVerbosity Loud >> putStrLn "Executing dryrun. No files will be renamed"
+    when (null $ paths opts) $ putStrLn "Error: No files specified." >> exitFailure
+    when (dryrun opts) $ setVerbosity Loud >> putStrLn "Executing dryrun. No files will be renamed."
     mapM_ (run opts) (paths opts)
 
 -- | Main execution logic that is mapped to the paths provided by the user.
