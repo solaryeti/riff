@@ -5,7 +5,7 @@ Riff is a command line application to rename files in a sane way on Unix systems
 
 ## Installing
 
-Riff is written in Haskell and can therefore most easily be built using stack. To do this obtain the latest release from https://github.com/commercialhaskell/stack/releases and built/install with
+Riff is written in Haskell and can therefore most easily be built using stack. To do this obtain the latest release from https://github.com/commercialhaskell/stack/releases and build/install with
 ```bash
 stack build --copy-bins
 ```
