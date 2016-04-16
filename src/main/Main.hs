@@ -1,5 +1,5 @@
 {- |
-Module      :  $Header
+Module      :  $Header$
 Description :  Rename files in a directory to only include a subset of chars
 Copyright   :  (c) Steven Meunier
 License     :  <BSD-style>
