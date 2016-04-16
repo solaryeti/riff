@@ -5,13 +5,22 @@ Riff is a command line application to rename files in a sane way on Unix systems
 
 ## Installing
 
-Riff is written in Haskell and can therefore most easily be built using stack. To do this obtain the latest release from https://github.com/commercialhaskell/stack/releases and built/install with `stack build --copy-bins`.
+Riff is written in Haskell and can therefore most easily be built using stack. To do this obtain the latest release from https://github.com/commercialhaskell/stack/releases and built/install with
+```bash
+stack build --copy-bins
+```
 
 ## Usage Example
 
-Help can be obtained by running `riff --help`. To view the list of characters that are considered "valid" run `riff --validchars`.
+Help can be obtained by running `riff --help`. To view the list of characters that are considered "valid" run
+```bash
+riff --validchars
+```
 
-Typical usage might include recursing directories and lowercasing filenames. This can be done by running riff as follows: `riff --lower --recurse /path/to/files`
+Typical usage might include recursing directories and lowercasing filenames. This can be done by running riff as follows:
+```bash
+riff --lower --recurse /path/to/files
+```
 
 It is possible to perform a dryrun before letting riff loose on your files with the `--dryrun` switch.
 
