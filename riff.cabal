@@ -42,8 +42,7 @@ executable riff
 
 test-suite riff-test
   type:                exitcode-stdio-1.0
-  hs-source-dirs:      src/test
-                     , test
+  hs-source-dirs:      test
   main-is:             Main.hs
   build-depends:       QuickCheck >= 2.8
                      , base
