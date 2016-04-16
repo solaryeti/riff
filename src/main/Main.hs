@@ -1,10 +1,10 @@
 {- |
-Module      :  <File name or $Header$ to be replaced automatically>
+Module      :  $Header
 Description :  Rename files in a directory to only include a subset of chars
 Copyright   :  (c) Steven Meunier
 License     :  <BSD-style>
 
-Maintainer  :  <steven@solaryeti.com>
+Maintainer  :  <code@solaryeti.com>
 Stability   :  experimental
 Portability :  portable
 
