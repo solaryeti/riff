@@ -65,12 +65,12 @@ options = Options
 -- | Build a function that can be passed to 'transform' for transforming
 -- filenames
 buildTransformer :: Options -> Transformer
-buildTransformer Options{..} = map
-    (if lower then toLower else id)
+buildTransformer Options{..} =
+      map (if lower then toLower else id)
     . removeUnderscoreBeforeDot
     . (if multiunderscore then id else removeDupUnderscore)
-    . removeInvalid
     . (if hyphen then neatenHyphen else id)
+    . removeInvalid
     . (if apostrophe then dropApostrophe else id)
 
 main :: IO ()
