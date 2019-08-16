@@ -21,7 +21,7 @@ module Riff.Files
 
 import           Riff.Sanitize
 
-import           Control.Monad      (filterM, liftM)
+import           Control.Monad      (filterM)
 import           System.Directory   (getDirectoryContents, makeAbsolute)
 import           System.FilePath    (takeFileName, (</>))
 import           System.Posix.Files (FileStatus, fileExist, getFileStatus,
