@@ -19,6 +19,7 @@ module Riff.Files
     , files
     ) where
 
+import           Riff.Prelude
 import           Riff.Sanitize
 
 import           Control.Monad      (filterM)
@@ -27,6 +28,7 @@ import           System.FilePath    (takeFileName, (</>))
 import           System.Posix.Files (FileStatus, fileExist, getFileStatus,
                                      isDirectory, isRegularFile)
 import qualified System.Posix.Files as F (rename)
+import Text.Show
 
 type OldFilePath = FilePath
 type NewFilePath = FilePath

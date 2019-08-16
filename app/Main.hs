@@ -19,15 +19,13 @@ underscore.
 
 module Main where
 
-import           Riff.Files
-import           Riff.Sanitize
+import           Riff
 
 import           Control.Exception      as E (catch, try)
 import           Control.Monad          (filterM, unless, when)
 import           Data.Char              (toLower)
 import qualified Data.Set               as Set (toList)
 
-import           System.Exit
 import           System.IO.Error
 import           System.Posix.Files     (getFileStatus, isDirectory)
 
@@ -77,8 +75,8 @@ main :: IO ()
 main = do
     opts <- cmdArgs options
     when (validchars opts) $ putStrLn (Set.toList validChars) >> exitSuccess
-    when (null $ paths opts) $ putStrLn "Error: No files specified." >> exitFailure
-    when (dryrun opts) $ setVerbosity Loud >> putStrLn "Executing dryrun. No files will be renamed."
+    when (null $ paths opts) $ putStrLn ("Error: No files specified." :: Text) >> exitFailure
+    when (dryrun opts) $ setVerbosity Loud >> putStrLn ("Executing dryrun. No files will be renamed." :: Text)
     mapM_ (run opts) (paths opts)
 
 -- | Main execution logic that is mapped to the paths provided by the user.
@@ -116,7 +114,7 @@ handleIOError :: IOError -> IO ()
 handleIOError e
   | isPermissionError e = putStrLn $ "Skipping " ++ show e
   | isDoesNotExistError e = case ioeGetFileName e of
-      Nothing -> putStrLn "File does not exist"
+      Nothing -> putStrLn ("File does not exist" :: Text)
       Just s  -> putStrLn $ "Aborting: " ++ s ++ ": file or directory does not exist"
   | otherwise = putStrLn $ "You made a huge mistake but I don't know what it is!\n"
                         ++ "But I'll give you a hint: "
