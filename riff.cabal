@@ -17,11 +17,10 @@ library
   hs-source-dirs:      src
   ghc-options:         -Wall -Wcompat
   exposed-modules:     Riff
-  other-modules:       Riff.Files
-                     , Riff.Sanitize
                      , Riff.Prelude
+                     , Riff.Files
+                     , Riff.Sanitize
   build-depends:       base >= 4.7 && < 5
-                     , cmdargs
                      , containers
                      , directory
                      , filepath
@@ -36,16 +35,19 @@ library
 executable riff
   hs-source-dirs:      app
   main-is:             Main.hs
+  other-modules:       Riff.Options
+                     , Paths_riff
   ghc-options:         -Wall -Wcompat -threaded -rtsopts -with-rtsopts=-N
   build-depends:       base
-                     , cmdargs
                      , containers
                      , filepath
+                     , gitrev
+                     , optparse-applicative
                      , unix
                      , riff
   default-language:    Haskell2010
   default-extensions:  OverloadedStrings
-                     , NoImplicitPrelude                       
+                     , NoImplicitPrelude
 
 test-suite riff-test
   type:                exitcode-stdio-1.0

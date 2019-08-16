@@ -13,13 +13,12 @@ from a valid character set. Any invalid characters are replaced with an
 underscore.
 -}
 
-{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE RecordWildCards    #-}
-{-# OPTIONS_GHC -Wall -Werror #-}
 
 module Main where
 
 import           Riff
+import           Riff.Options
 
 import           Control.Exception             as E
                                                 ( catch
@@ -32,68 +31,16 @@ import           Control.Monad                  ( filterM
 import           Data.Char                      ( toLower )
 import qualified Data.Set                      as Set
                                                 ( toList )
-
 import           System.IO.Error
 import           System.Posix.Files             ( getFileStatus
                                                 , isDirectory
                                                 )
 
-import           System.Console.CmdArgs         ( Data
-                                                , Typeable
-                                                , Verbosity(..)
-                                                , args
-                                                , cmdArgs
-                                                , def
-                                                , help
-                                                , setVerbosity
-                                                , summary
-                                                , typ
-                                                , verbosity
-                                                , whenLoud
-                                                , (&=)
-                                                )
-
-data Options = Options
-    { apostrophe      :: Bool
-    , dryrun          :: Bool
-    , lower           :: Bool
-    , multiunderscore :: Bool
-    , hyphen          :: Bool
-    , paths           :: [FilePath]
-    , recurse         :: Bool
-    , validchars      :: Bool
-    } deriving (Show, Data, Typeable)
-
-options :: Options
-options =
-  Options
-      { apostrophe      =
-        def &= help
-          "Drop apostrophes instead of replacing them with an underscore."
-      , dryrun          =
-        def
-          &= help
-               "Display changes without actually renaming anything. Implies verbosity."
-      , lower           = def &= help "Convert to lowercase"
-      , multiunderscore = def &= help "Allow multiple underscores"
-      , hyphen          =
-        def &= help
-          "Neaten hyphens by removing underscores to the left and right of them"
-      , paths           = def &= args &= typ "FILES/DIRS"
-      , recurse         = def &= help "Recurse into subdirectories"
-      , validchars      =
-        def &= help "List the valid chars that filenames will consist of"
-      }
-    &= verbosity
-    &= help
-         "Sanitize filenames by replacing any chars not considered valid with _"
-    &= summary "riff v0.2.0, (C) Steven Meunier 2016"
-
 -- | Build a function that can be passed to 'transform' for transforming
 -- filenames
 buildTransformer :: Options -> Transformer
 buildTransformer Options {..} =
-  map (if lower then toLower else id)
+  fmap (if lower then toLower else id)
     . removeUnderscoreBeforeDot
     . (if multiunderscore then id else removeDupUnderscore)
     . (if hyphen then neatenHyphen else id)
@@ -102,13 +49,13 @@ buildTransformer Options {..} =
 
 main :: IO ()
 main = do
-  opts <- cmdArgs options
+  opts <- getOpts
   when (validchars opts) $ putStrLn (Set.toList validChars) >> exitSuccess
   when (null $ paths opts)
     $  putStrLn ("Error: No files specified." :: Text)
     >> exitFailure
-  when (dryrun opts) $ setVerbosity Loud >> putStrLn
-    ("Executing dryrun. No files will be renamed." :: Text)
+  when (dryrun opts)
+    $ putStrLn ("Executing dryrun. No files will be renamed." :: Text)
   mapM_ (run opts) (paths opts)
 
 -- | Main execution logic that is mapped to the paths provided by the user.
@@ -131,7 +78,7 @@ run opts path = do
 
  where
   doRename = do
-    (whenLoud . inform . getFilePairs) [path]
+    when (verbose opts) (inform $ getFilePairs [path])
     unless (dryrun opts) $ E.catch
       (renameableFilePairs (getFilePairs [path]) >>= mapM_ rename)
       handleIOError
