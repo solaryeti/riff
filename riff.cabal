@@ -1,5 +1,5 @@
 name:                riff
-version:             0.2.0
+version:             0.3.0
 synopsis:            Initial project template from stack
 description:         Please see README.md
 homepage:            http://github.com/githubuser/riff#readme
@@ -7,7 +7,7 @@ license:             BSD3
 license-file:        LICENSE
 author:              Steven Meunier
 maintainer:          steven@solaryeti.com
-copyright:           2016 Steven Meunier
+copyright:           2019 Steven Meunier
 category:            Application
 build-type:          Simple
 -- extra-source-files:
