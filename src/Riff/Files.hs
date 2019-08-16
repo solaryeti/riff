@@ -1,34 +1,44 @@
 -- | Working with file pairs and obtaining directory listings
 
 module Riff.Files
-    ( -- * Types
-      FilePair(..)
-    , FilePairs
+  ( -- * Types
+    FilePair(..)
+  , FilePairs
 
-      -- * FilePairs
-    , new
-    , old
-    , newExist
-    , rename
-    , filePairs
-    , renameableFilePairs
+    -- * FilePairs
+  , new
+  , old
+  , newExist
+  , rename
+  , filePairs
+  , renameableFilePairs
 
-      -- * Directory Listing
-    , dirContents
-    , dirs
-    , files
-    ) where
+    -- * Directory Listing
+  , dirContents
+  , dirs
+  , files
+  )
+where
 
 import           Riff.Prelude
 import           Riff.Sanitize
 
-import           Control.Monad      (filterM)
-import           System.Directory   (getDirectoryContents, makeAbsolute)
-import           System.FilePath    (takeFileName, (</>))
-import           System.Posix.Files (FileStatus, fileExist, getFileStatus,
-                                     isDirectory, isRegularFile)
-import qualified System.Posix.Files as F (rename)
-import Text.Show
+import           Control.Monad                  ( filterM )
+import           System.Directory               ( getDirectoryContents
+                                                , makeAbsolute
+                                                )
+import           System.FilePath                ( takeFileName
+                                                , (</>)
+                                                )
+import           System.Posix.Files             ( FileStatus
+                                                , fileExist
+                                                , getFileStatus
+                                                , isDirectory
+                                                , isRegularFile
+                                                )
+import qualified System.Posix.Files            as F
+                                                ( rename )
+import           Text.Show
 
 type OldFilePath = FilePath
 type NewFilePath = FilePath
@@ -41,7 +51,7 @@ data FilePair = FilePair OldFilePath NewFilePath
 type FilePairs = [FilePair]
 
 instance Show FilePair where
-    show (FilePair x y) = x ++ " -> " ++ takeFileName y
+  show (FilePair x y) = x ++ " -> " ++ takeFileName y
 
 -- | Return the new name in a 'FilePair'.
 new :: FilePair -> FilePath
@@ -65,9 +75,9 @@ rename (FilePair x y) = F.rename x y
 -- 'FilePairs'.
 filePairs :: Transformer -> [FilePath] -> FilePairs
 filePairs f xs = filter (not . namesSame) $ map mkFilePair xs
-  where
-    namesSame (FilePair x y) = x == y
-    mkFilePair x = FilePair x (transform f x)
+ where
+  namesSame (FilePair x y) = x == y
+  mkFilePair x = FilePair x (transform f x)
 
 -- | Filter 'FilePairs' to remove the 'FilePair's that possess a new
 -- file name where that file already exists and renaming the file
