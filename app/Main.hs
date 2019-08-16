@@ -88,19 +88,21 @@ inform :: FilePairs -> IO ()
 inform xs = do
   filterM newExist xs >>= mapM_ (putStrLn . informExists)
   renameableFilePairs xs >>= mapM_ print
-  where informExists x = "Skipping " ++ show x ++ " already exists."
+ where
+  informExists :: FilePair -> Text
+  informExists x = "Skipping " <> show x <> " already exists."
 
 handleIOError :: IOError -> IO ()
 handleIOError e
   | isPermissionError e
-  = putStrLn $ "Skipping " ++ show e
+  = putStrLn $ "Skipping " <> (show e :: Text)
   | isDoesNotExistError e
   = case ioeGetFileName e of
     Nothing -> putStrLn ("File does not exist" :: Text)
     Just s ->
-      putStrLn $ "Aborting: " ++ s ++ ": file or directory does not exist"
+      putStrLn $ "Aborting: " <> s <> ": file or directory does not exist"
   | otherwise
   = putStrLn
     $  "You made a huge mistake but I don't know what it is!\n"
-    ++ "But I'll give you a hint: "
-    ++ ioeGetErrorString e
+    <> "But I'll give you a hint: "
+    <> ioeGetErrorString e

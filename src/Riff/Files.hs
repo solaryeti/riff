@@ -51,7 +51,7 @@ data FilePair = FilePair OldFilePath NewFilePath
 type FilePairs = [FilePair]
 
 instance Show FilePair where
-  show (FilePair x y) = x ++ " -> " ++ takeFileName y
+  show (FilePair x y) = x <> " -> " <> takeFileName y
 
 -- | Return the new name in a 'FilePair'.
 new :: FilePair -> FilePath
