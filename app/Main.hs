@@ -94,15 +94,9 @@ inform xs = do
 
 handleIOError :: IOError -> IO ()
 handleIOError e
-  | isPermissionError e
-  = putStrLn $ "Skipping " <> (show e :: Text)
-  | isDoesNotExistError e
-  = case ioeGetFileName e of
+  | isPermissionError e = putStrLn $ "Skipping " <> (show e :: Text)
+  | isDoesNotExistError e = case ioeGetFileName e of
     Nothing -> putStrLn ("File does not exist" :: Text)
     Just s ->
       putStrLn $ "Aborting: " <> s <> ": file or directory does not exist"
-  | otherwise
-  = putStrLn
-    $  "You made a huge mistake but I don't know what it is!\n"
-    <> "But I'll give you a hint: "
-    <> ioeGetErrorString e
+  | otherwise = putStrLn $ "Error: " <> ioeGetErrorString e
