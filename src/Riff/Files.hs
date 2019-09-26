@@ -1,4 +1,10 @@
--- | Working with file pairs and obtaining directory listings
+{-|
+Module      : Riff.Files
+Description : Functions for working with file pairs and obtaining directory listings
+Copyright   : (c) 2019 Steven Meunier
+License     : BSD-style (see the file LICENSE)
+
+-}
 
 module Riff.Files
   ( -- * Types
