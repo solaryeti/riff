@@ -29,7 +29,6 @@ where
 import           Riff.Prelude
 import           Riff.Sanitize
 
-import           Control.Monad                  ( filterM )
 import           System.Directory               ( getDirectoryContents
                                                 , makeAbsolute
                                                 )

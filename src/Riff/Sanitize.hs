@@ -25,8 +25,6 @@ module Riff.Sanitize
 where
 
 import           Riff.Prelude
-import           Data.Char                      ( intToDigit )
-import           Data.List                      ( group )
 import qualified Data.Set                      as Set
                                                 ( Set
                                                 , fromList

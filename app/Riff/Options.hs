@@ -46,8 +46,9 @@ optsParser = info
   <> header "riff - filename sanitizer"
   )
  where
-  customHelper = abortOption ShowHelpText
-    $ mconcat [long "help", help "Show this help text", hidden]
+  customHelper = abortOption
+    (ShowHelpText Nothing)
+    (mconcat [long "help", help "Show this help text", hidden])
 
 parseOpts :: Parser Options
 parseOpts =

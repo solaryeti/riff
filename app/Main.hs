@@ -24,11 +24,7 @@ import           Control.Exception             as E
                                                 ( catch
                                                 , try
                                                 )
-import           Control.Monad                  ( filterM
-                                                , unless
-                                                , when
-                                                )
-import           Data.Char                      ( toLower )
+
 import qualified Data.Set                      as Set
                                                 ( toList )
 import           System.IO.Error
