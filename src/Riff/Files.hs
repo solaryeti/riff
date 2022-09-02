@@ -1,7 +1,7 @@
 {-|
 Module      : Riff.Files
 Description : Functions for working with file pairs and obtaining directory listings
-Copyright   : (c) 2019 Steven Meunier
+Copyright   : (c) 2022 Steven Meunier
 License     : BSD-style (see the file LICENSE)
 
 -}

@@ -1,7 +1,7 @@
 {-|
 Module      : Riff.Sanitize
 Description : Functions for string sanitation
-Copyright   : (c) 2019 Steven Meunier
+Copyright   : (c) 2022 Steven Meunier
 License     : BSD-style (see the file LICENSE)
 
 -}

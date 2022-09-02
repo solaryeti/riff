@@ -7,7 +7,7 @@ license:             BSD3
 license-file:        LICENSE
 author:              Steven Meunier
 maintainer:          steven@solaryeti.com
-copyright:           2019 Steven Meunier
+copyright:           2022 Steven Meunier
 category:            Application
 build-type:          Simple
 -- extra-source-files:

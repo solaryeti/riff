@@ -1,7 +1,7 @@
 {-|
 Module      : Riff.Prelude
 Description : Custom Prelude
-Copyright   : (c) 2019 Steven Meunier
+Copyright   : (c) 2022 Steven Meunier
 License     : BSD-style (see the file LICENSE)
 
 Welcome to your custom Prelude
@@ -13,9 +13,8 @@ module Riff.Prelude
   ( module Exports
   , id
   , String
-  )
-where
+  ) where
 
-import           Protolude                     as Exports
 import           Data.Function                  ( id )
+import           Protolude                     as Exports
 type String = [Char]
