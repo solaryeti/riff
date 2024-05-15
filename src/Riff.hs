@@ -5,5 +5,5 @@ module Riff
   ) where
 
 import Riff.Files
-import Riff.Sanitize
 import Riff.Prelude
+import Riff.Sanitize

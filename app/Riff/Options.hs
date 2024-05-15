@@ -24,15 +24,15 @@ import Options.Applicative
 import Paths_riff (version) -- Magic module that gets the version from the cabal file
 
 data Options = Options
-  { apostrophe :: Bool
-  , dryrun :: Bool
-  , lower :: Bool
-  , multiunderscore :: Bool
-  , hyphen :: Bool
-  , recurse :: Bool
-  , validchars :: Bool
-  , verbose :: Bool
-  , paths :: [FilePath]
+  { apostrophe :: !Bool
+  , dryrun :: !Bool
+  , lower :: !Bool
+  , multiunderscore :: !Bool
+  , hyphen :: !Bool
+  , recurse :: !Bool
+  , validchars :: !Bool
+  , verbose :: !Bool
+  , paths :: ![FilePath]
   }
   deriving (Show)
 

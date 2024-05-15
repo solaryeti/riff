@@ -1,14 +1,12 @@
-{-|
+{- |
 Module      : Riff.Files
 Description : Functions for working with file pairs and obtaining directory listings
-Copyright   : (c) 2022 Steven Meunier
+Copyright   : (c) 2024 Steven Meunier
 License     : BSD-style (see the file LICENSE)
-
 -}
-
 module Riff.Files
   ( -- * Types
-    FilePair(..)
+    FilePair (..)
   , FilePairs
 
     -- * FilePairs
@@ -26,31 +24,35 @@ module Riff.Files
   )
 where
 
-import           Riff.Prelude
-import           Riff.Sanitize
+import Riff.Prelude
+import Riff.Sanitize
 
-import           System.Directory               ( getDirectoryContents
-                                                , makeAbsolute
-                                                )
-import           System.FilePath                ( takeFileName
-                                                , (</>)
-                                                )
-import           System.Posix.Files             ( FileStatus
-                                                , fileExist
-                                                , getFileStatus
-                                                , isDirectory
-                                                , isRegularFile
-                                                )
-import qualified System.Posix.Files            as F
-                                                ( rename )
-import           Text.Show
+import System.Directory
+  ( getDirectoryContents
+  , makeAbsolute
+  )
+import System.FilePath
+  ( takeFileName
+  , (</>)
+  )
+import System.Posix.Files
+  ( FileStatus
+  , fileExist
+  , getFileStatus
+  , isDirectory
+  , isRegularFile
+  )
+import qualified System.Posix.Files as F
+  ( rename
+  )
+import Text.Show
 
 type OldFilePath = FilePath
 type NewFilePath = FilePath
 
 -- | 'FilePath's grouped as the old 'FilePath' and the new 'FilePath'
 -- that the file can be renamed to.
-data FilePair = FilePair OldFilePath NewFilePath
+data FilePair = FilePair !OldFilePath !NewFilePath
 
 -- | List of FilePairs
 type FilePairs = [FilePair]
@@ -114,4 +116,5 @@ filteredLs x p = ls x >>= filterM (fmap p . getFileStatus)
 -- | List the absolute path for all files in a given directory.
 ls :: FilePath -> IO [FilePath]
 ls x = getDirectoryContents x >>= filterSpecial >>= absPaths
-  where absPaths = mapM (makeAbsolute . (x </>))
+ where
+  absPaths = mapM (makeAbsolute . (x </>))

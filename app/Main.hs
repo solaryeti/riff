@@ -1,3 +1,5 @@
+{-# LANGUAGE RecordWildCards #-}
+
 {- |
 Module      :  $Header$
 Description :  Rename files in a directory to only include a subset of chars
@@ -12,30 +14,29 @@ Rename files in a directory so that they only include a certain characters
 from a valid character set. Any invalid characters are replaced with an
 underscore.
 -}
-
-{-# LANGUAGE RecordWildCards    #-}
-
 module Main where
 
-import           Riff
-import           Riff.Options
+import Riff
+import Riff.Options
 
-import           Control.Exception             as E
-                                                ( catch
-                                                , try
-                                                )
+import Control.Exception as E
+  ( catch
+  , try
+  )
 
-import qualified Data.Set                      as Set
-                                                ( toList )
-import           System.IO.Error
-import           System.Posix.Files             ( getFileStatus
-                                                , isDirectory
-                                                )
+import qualified Data.Set as Set
+  ( toList
+  )
+import System.IO.Error
+import System.Posix.Files
+  ( getFileStatus
+  , isDirectory
+  )
 
 -- | Build a function that can be passed to 'transform' for transforming
 -- filenames
 buildTransformer :: Options -> Transformer
-buildTransformer Options {..} =
+buildTransformer Options{..} =
   fmap (if lower then toLower else id)
     . removeUnderscoreBeforeDot
     . (if multiunderscore then id else removeDupUnderscore)
@@ -47,11 +48,11 @@ main :: IO ()
 main = do
   opts <- getOpts
   when (validchars opts) $ putStrLn (Set.toList validChars) >> exitSuccess
-  when (null $ paths opts)
-    $  putStrLn ("Error: No files specified." :: Text)
-    >> exitFailure
-  when (dryrun opts)
-    $ putStrLn ("Executing dryrun. No files will be renamed." :: Text)
+  when (null $ paths opts) $
+    putStrLn ("Error: No files specified." :: Text)
+      >> exitFailure
+  when (dryrun opts) $
+    putStrLn ("Executing dryrun. No files will be renamed." :: Text)
   mapM_ (run opts) (paths opts)
 
 -- | Main execution logic that is mapped to the paths provided by the user.
@@ -62,22 +63,22 @@ run :: Options -> FilePath -> IO ()
 run opts path = do
   rf <- E.try (isDirectory <$> getFileStatus path) :: IO (Either IOError Bool)
   case rf of
-    Left  e    -> handleIOError e >> exitFailure
+    Left e -> handleIOError e >> exitFailure
     Right True -> do
       when (recurse opts) $ do
         rd <- E.try $ dirContents path :: IO (Either IOError [FilePath])
         case rd of
-          Left  e     -> handleIOError e >> exitFailure
+          Left e -> handleIOError e >> exitFailure
           Right paths -> mapM_ (run opts) paths
       doRename
     Right False -> doRename
-
  where
   doRename = do
     when (verbose opts) (inform $ getFilePairs [path])
-    unless (dryrun opts) $ E.catch
-      (renameableFilePairs (getFilePairs [path]) >>= mapM_ rename)
-      handleIOError
+    unless (dryrun opts) $
+      E.catch
+        (renameableFilePairs (getFilePairs [path]) >>= mapM_ rename)
+        handleIOError
   getFilePairs = filePairs $ buildTransformer opts
 
 inform :: FilePairs -> IO ()
@@ -92,7 +93,7 @@ handleIOError :: IOError -> IO ()
 handleIOError e
   | isPermissionError e = putStrLn $ "Skipping " <> (show e :: Text)
   | isDoesNotExistError e = case ioeGetFileName e of
-    Nothing -> putStrLn ("File does not exist" :: Text)
-    Just s ->
-      putStrLn $ "Aborting: " <> s <> ": file or directory does not exist"
+      Nothing -> putStrLn ("File does not exist" :: Text)
+      Just s ->
+        putStrLn $ "Aborting: " <> s <> ": file or directory does not exist"
   | otherwise = putStrLn $ "Error: " <> ioeGetErrorString e
