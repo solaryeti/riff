@@ -1,7 +1,7 @@
 {- |
 Module      : Riff.Prelude
 Description : Custom Prelude
-Copyright   : (c) 2024 Steven Meunier
+Copyright   : (c) 2026 Steven Meunier
 License     : BSD-style (see the file LICENSE)
 
 Welcome to your custom Prelude
