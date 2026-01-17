@@ -83,7 +83,7 @@ rename (FilePair x y) = F.rename x y
 filePairs :: Transformer -> [FilePath] -> FilePairs
 filePairs f xs = filter (not . namesSame) $ map mkFilePair xs
  where
-  namesSame (FilePair x y) = x == y
+  namesSame (FilePair x y) = takeFileName x == takeFileName y
   mkFilePair x = FilePair x (transform f x)
 
 -- | Filter 'FilePairs' to remove the 'FilePair's that possess a new
